@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: sunduk_db
+      MYSQL_USER: sunduk
+      MYSQL_PASSWORD: pass
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:latest
+    container_name: redis_container
+    restart: always
+    ports:
+      - "6379:6379"
+
+  springbootapp:
+    image: azul/zulu-openjdk:20
+    container_name: spring_boot_app_container
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - redis
+    links:
+      - mysql
+    volumes:
+      - ./target/sun-duck-0.0.1-SNAPSHOT.jar:/app/spring-boot-app.jar
+    command: ["java", "-jar", "/app/spring-boot-app.jar"]
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: sunduk_db
+      MYSQL_USER: sunduk
+      MYSQL_PASSWORD: pass
